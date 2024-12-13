@@ -1,0 +1,51 @@
+<!-- layout.ejs - Rev.-05 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || "Odin Project" %></title>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <% if (user) { %>
+          <li><a href="/users/<%= user.username %>">My Profile</a></li>
+          <li><a href="/auth/logout">Logout</a></li>
+        <% } else { %>
+          <li><a href="/auth/login">Login</a></li>
+          <li><a href="/auth/register">Register</a></li>
+        <% } %>
+      </ul>
+    </nav>
+  </header>
+
+  <aside>
+    <h2>All Users</h2>
+    <ul>
+      <% if (allUsers && allUsers.length > 0) { %>
+        <% allUsers.forEach(user => { %>
+          <li>
+            <a href="/users/<%= user.username %>"><%= user.username %></a>
+            <% if (friends && friends.includes(user.id)) { %>
+              <span>(Friend)</span>
+            <% } %>
+          </li>
+        <% }) %>
+      <% } else { %>
+        <li>No users available</li>
+      <% } %>
+    </ul>
+  </aside>
+
+  <main>
+    <%- include(body) %>
+  </main>
+
+  <footer>
+    <p>&copy; <%= new Date().getFullYear() %> Odin Project</p>
+  </footer>
+</body>
+</html>

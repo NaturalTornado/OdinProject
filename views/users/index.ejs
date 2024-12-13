@@ -1,0 +1,28 @@
+<!-- index.ejs -->
+<%- include('../layout.ejs') %>
+
+<main>
+  <h1>All Users</h1>
+
+  <% if (users.length === 0) { %>
+    <p>No users found.</p>
+  <% } else { %>
+    <ul>
+      <% users.forEach((user) => { %>
+        <li>
+          <strong><%= user.username %></strong>
+          <% if (user.profile && user.profile.avatarUrl) { %>
+            <img src="<%= user.profile.avatarUrl %>" alt="<%= user.username %>'s Avatar" />
+          <% } %>
+
+          <form action="/users/<%= user.id %>/follow" method="POST">
+            <button type="submit">Follow</button>
+          </form>
+          <form action="/users/<%= user.id %>/unfollow" method="POST">
+            <button type="submit">Unfollow</button>
+          </form>
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+</main>

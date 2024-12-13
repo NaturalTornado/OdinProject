@@ -1,0 +1,147 @@
+
+<!-- feed.ejs - Rev.-06 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Feed</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Welcome, <%= user.username %>!</h1>
+    <a href="/logout">Logout</a>
+  </header>
+
+  <!-- Users List Section -->
+  <div>
+    <h2>Users List</h2>
+    <ul>
+      <% if (users.length === 0) { %>
+        <p>No users yet.</p>
+      <% } else { %>
+        <% users.forEach((user) => { %>
+          <li>
+            <a href="/users/<%= user.username %>"><%= user.username %></a>
+          </li>
+        <% }); %>
+      <% } %>
+    </ul>
+  </div>
+
+  <!-- Your Profile Section -->
+  <div>
+    <h3>Your Profile</h3>
+    <form id="update-bio-form">
+      <% if (profile && profile.bio) { %>
+        <textarea
+          name="bio"
+          id="bio-input"
+          rows="3"
+          placeholder="Write something about yourself!"
+          <%= profile.userId === user.id ? '' : 'readonly' %>>
+<%= profile.bio %></textarea>
+      <% } else { %>
+        <textarea
+          name="bio"
+          id="bio-input"
+          rows="3"
+          placeholder="Write something about yourself!"
+          <%= profile.userId === user.id ? '' : 'readonly' %>></textarea>
+      <% } %>
+      <% if (profile.userId === user.id) { %>
+        <button type="button" id="update-bio-button">Update Bio</button>
+      <% } %>
+    </form>
+  </div>
+
+  <!-- Feed Section -->
+  <main>
+    <h2>Your Feed</h2>
+
+    <!-- Post Creation Form -->
+    <form action="/posts" method="POST">
+      <textarea name="content" placeholder="What's on your mind?" rows="3"></textarea>
+      <button type="submit">Post</button>
+    </form>
+
+    <!-- Posts List -->
+    <% if (posts.length === 0) { %>
+      <p>No posts yet. Start following users to see their posts!</p>
+    <% } else { %>
+      <% posts.forEach((post) => { %>
+        <div class="post">
+          <h3><%= post.author.username %></h3>
+          <p><%= post.content %></p>
+          <div class="post-actions">
+            <form action="/posts/<%= post.id %>/like" method="POST">
+              <button type="submit">
+                Like (<%= post.likes.length %>)
+              </button>
+            </form>
+            <a href="/posts/<%= post.id %>">View Comments (<%= post.comments.length %>)</a>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+
+
+    <!-- feed.ejs - Add this block -->
+<div>
+  <h2>Messages</h2>
+  <ul>
+    <% conversations.forEach((conversation) => { %>
+      <li>
+        <a href="/users/<%= conversation.otherUser.username %>">
+          <strong><%= conversation.title %></strong>
+        </a>
+        with <%= conversation.otherUser.username %> 
+        (<%= new Date(conversation.latestTimestamp).toLocaleString() %>)
+      </li>
+    <% }); %>
+  </ul>
+</div>
+
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const updateBioButton = document.getElementById('update-bio-button');
+      const bioInput = document.getElementById('bio-input');
+
+      // Event Listener for Update Bio Button
+      updateBioButton?.addEventListener('click', async () => {
+        const bio = bioInput.value.trim();
+
+        if (!bio) {
+          alert('Bio cannot be empty.');
+          return;
+        }
+
+        try {
+          const response = await fetch('/users/api/profile/update-bio', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bio }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Bio updated successfully');
+          } else {
+            alert('Failed to update bio. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error updating bio:', error);
+          alert('An unexpected error occurred. Please try again.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!-- profile.ejs - Rev.-05 -->
+<section>
+  <h1>User Profile</h1>
+  <div>
+    <h2><%= profileUser.username %>'s Profile</h2>
+    <p><strong>Email:</strong> <%= profileUser.email %></p>
+
+    <% if (profileUser.profile && profileUser.profile.bio) { %>
+      <p><strong>Bio:</strong> <%= profileUser.profile.bio %></p>
+    <% } else { %>
+      <p><strong>Bio:</strong> No bio available</p>
+    <% } %>
+
+    <% if (profileUser.profile && profileUser.profile.avatarUrl) { %>
+      <img src="<%= profileUser.profile.avatarUrl %>" alt="<%= profileUser.username %>'s Profile Picture" />
+    <% } else { %>
+      <p>No profile picture uploaded.</p>
+    <% } %>
+  </div>
+
+  <hr>
+
+  <!-- Friend Actions -->
+  <div>
+    <h3>Friend Actions</h3>
+    <% if (friends.includes(profileUser.id)) { %>
+      <button id="removeFriendButton" data-friend-id="<%= profileUser.id %>">Remove Friend</button>
+    <% } else { %>
+      <button id="addFriendButton" data-friend-id="<%= profileUser.id %>">Add Friend</button>
+    <% } %>
+  </div>
+
+  <hr>
+
+  <!-- Uploaded Posts -->
+  <div>
+    <h3>Posts by <%= profileUser.username %></h3>
+    <% if (profileUser.posts && profileUser.posts.length > 0) { %>
+      <ul>
+        <% profileUser.posts.forEach(post => { %>
+          <li>
+            <p><strong>Content:</strong> <%= post.content %></p>
+            <p><strong>Posted on:</strong> <%= new Date(post.createdAt).toLocaleString() %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p>No posts available.</p>
+    <% } %>
+  </div>
+
+
+  <!-- profile.ejs - Add this block -->
+  <h3>Send a Message to <%= profileUser.username %></h3>
+  <form id="send-message-form" data-receiver-id="<%= profileUser.id %>">
+    <input type="text" id="message-title" placeholder="Title" required />
+    <textarea id="message-body" placeholder="Message body" required></textarea>
+    <button type="submit">Send</button>
+  </form>
+  
+
+
+
+
+</section>
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const addFriendButton = document.getElementById("addFriendButton");
+    const removeFriendButton = document.getElementById("removeFriendButton");
+
+    if (addFriendButton) {
+      addFriendButton.addEventListener("click", async () => {
+        const friendId = addFriendButton.dataset.friendId;
+        console.log('add firend');
+        try {
+          const response = await fetch("/users/api/friends/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ friendId }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert(result.message);
+            location.reload();
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          console.error("Error adding friend:", error);
+          alert("Failed to add friend. Please try again.");
+        }
+      });
+    }
+
+    if (removeFriendButton) {
+      removeFriendButton.addEventListener("click", async () => {
+        const friendId = removeFriendButton.dataset.friendId;
+
+        try {
+          const response = await fetch("/users/api/friends/remove", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ friendId }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert(result.message);
+            location.reload();
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          console.error("Error removing friend:", error);
+          alert("Failed to remove friend. Please try again.");
+        }
+      });
+    }
+
+
+    const messageForm = document.getElementById('send-message-form');
+  const receiverId = messageForm.dataset.receiverId;
+
+  messageForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const title = document.getElementById('message-title').value.trim();
+    const body = document.getElementById('message-body').value.trim();
+
+    if (!title || !body) {
+      alert('Both title and body are required.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/users/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, body, receiverId }), // Send receiverId instead of username
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Message sent successfully.');
+        location.reload();
+      } else {
+        alert(result.error || 'An error occurred.');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('An error occurred. Please try again.');
+    }
+  });
+
+});
+
+</script>

@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Use environment variable for DB URL
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  email      String    @unique
+  password   String
+  profile    Profile?  // One-to-One relationship
+  posts      Post[]    // One-to-Many relationship
+  comments   Comment[] // One-to-Many relationship
+  likes      Like[]    // One-to-Many relationship
+  followers  Follow[]  @relation("Following")
+  following  Follow[]  @relation("Followers")
+  messagesSent    Message[] @relation("SentMessages")      // One-to-Many relationship (sent messages)
+  messagesReceived Message[] @relation("ReceivedMessages") // One-to-Many relationship (received messages)
+  createdAt  DateTime  @default(now())
+  
+  // Relations for Friend model
+  friends     Friend[] @relation("UserFriends")
+  friendsOf   Friend[] @relation("FriendOfUser")
+}
+
+model Profile {
+  id        Int     @id @default(autoincrement())
+  userId    Int     @unique
+  bio       String?
+  avatarUrl String?
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  comments  Comment[] // One-to-Many relationship
+  likes     Like[]   // One-to-Many relationship
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  postId    Int
+  author    User     @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  follower    User     @relation("Followers", fields: [followerId], references: [id])
+  following   User     @relation("Following", fields: [followingId], references: [id])
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())       // Unique message ID
+  title       String?  @db.VarChar(255)                   // Optional message title, max 255 characters
+  body        String   @db.Text                           // Message body
+  senderId    Int                                        // Sender's user ID
+  receiverId  Int                                        // Receiver's user ID
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  timestamp   DateTime @default(now())                   // Time message was sent
+  deleted     Boolean  @default(false)                   // Soft deletion flag
+  read        Boolean  @default(false)                   // Read status flag
+
+  @@index([senderId]) // Index for efficient sender-based queries
+  @@index([receiverId]) // Index for efficient receiver-based queries
+}
+
+
+
+model Friend {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  user      User   @relation("UserFriends", fields: [userId], references: [id])
+  friend    User   @relation("FriendOfUser", fields: [friendId], references: [id])
+}
